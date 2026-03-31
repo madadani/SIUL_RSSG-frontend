@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/auth';
-import { ShieldCheck, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -19,11 +19,39 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-emerald-400 via-emerald-500 to-sky-500 relative overflow-hidden p-6 font-poppins">
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0) translateZ(0); }
+          50% { transform: translateY(-15px) translateZ(0); }
+        }
+        .bubble {
+          position: absolute;
+          background: white;
+          border-radius: 20%;
+          animation: float 10s infinite ease-in-out;
+          pointer-events: none;
+          opacity: 0.1;
+          will-change: transform;
+        }
+      `}</style>
+      
+      {/* Optimized Bubbles (Static properties, minimal movement) */}
+      <div className="bubble w-20 h-20 top-20 left-10" style={{ animationDelay: '0s' }}></div>
+      <div className="bubble w-32 h-32 bottom-20 left-1/4" style={{ animationDelay: '2s' }}></div>
+      <div className="bubble w-16 h-16 top-40 right-[15%]" style={{ animationDelay: '4s' }}></div>
+      <div className="bubble w-40 h-40 bottom-40 right-[5%]" style={{ animationDelay: '1s', opacity: 0.05 }}></div>
+
+      <div className="max-w-md w-full space-y-8 bg-white/95 p-10 rounded-[40px] shadow-2xl border border-white/50 relative z-10 transition-all mb-8 mt-auto">
         <div>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 shadow-inner">
-            <ShieldCheck className="h-10 w-10 text-blue-600" />
+          <div className="mx-auto flex h-20 w-auto items-center justify-center">
+            <img 
+              src="/logo.png" 
+              alt="Logo RS" 
+              className="h-20 w-auto object-contain" 
+              fetchpriority="high"
+              decoding="async"
+            />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
             Login SIUL PBJ
@@ -41,7 +69,7 @@ export default function Login() {
                 id="username"
                 type="text"
                 required
-                className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-semibold bg-gray-50"
+                className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-semibold bg-gray-50/50 backdrop-blur-sm"
                 placeholder="Masukkan username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -54,7 +82,7 @@ export default function Login() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-semibold bg-gray-50"
+                  className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-semibold bg-gray-50/50 backdrop-blur-sm"
                   placeholder="Masukkan password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -94,9 +122,8 @@ export default function Login() {
         </form>
       </div>
       
-      <div className="mt-10 text-center text-sm text-gray-500 font-bold">
-        Sistem Integrasi © 2026<br/>
-        <a href="/" className="text-blue-600 hover:text-blue-800 transition-colors inline-block mt-2 font-extrabold underline-offset-4 hover:underline">Akses Web Publik (Tanpa Login)</a>
+      <div className="text-center text-sm text-gray-500 font-bold z-10 w-full px-4 mb-auto">
+        SIUL PBJ © 2026 IT RSUD dr. Soeratno Gemolong<br/>
       </div>
     </div>
   );

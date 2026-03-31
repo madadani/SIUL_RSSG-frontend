@@ -4,8 +4,90 @@
 @tailwind components;
 @tailwind utilities;
 
+@media print {
+  /* Hide everything first */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the main report content */
+  main, main * {
+    visibility: visible;
+  }
+
+  /* Reset main layout */
+  main {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  /* Reset all colors for readability and print friendliness */
+  main * {
+    color: black !important;
+    background-color: transparent !important;
+    border-color: #ddd !important;
+    box-shadow: none !important;
+  }
+
+  /* Add back colors/icons that should be shown */
+  .lucide, i, svg, .bg-blue-600, .bg-indigo-600, .bg-purple-600, .bg-emerald-500, .bg-red-500, .bg-yellow-500 {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force white theme for boxes */
+  .bg-\[\#1e293b\], .bg-slate-900, .bg-\[\#0f172a\], .bg-slate-800 {
+    background-color: white !important;
+    border: 1px solid #eee !important;
+  }
+
+  /* Hide specific UI widgets inside main during print */
+  button, 
+  input, 
+  select, 
+  .no-print,
+  .inline-flex,
+  [title="Reset Filter"] {
+    display: none !important;
+  }
+
+  /* Table and Row normalization for official look */
+  table, th, td {
+    border: 1px solid black !important;
+    border-collapse: collapse !important;
+  }
+
+  .rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-lg {
+    border-radius: 0 !important;
+  }
+
+  .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
+    box-shadow: none !important;
+  }
+
+  /* Cancel animations and ensure visibility */
+  .animate-in, .fade-in, .slide-in-from-top-2 {
+    animation: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+}
+
 @layer base {
-  body {
-    @apply font-sans antialiased text-gray-900 bg-gray-50;
+  html, body {
+    @apply font-sans antialiased text-gray-900;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(to top right, #eff6ff, #ecfdf5, #fff7ed);
   }
 }
