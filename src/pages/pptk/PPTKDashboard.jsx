@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Search, Filter, RefreshCw, RefreshCcw, Check, ArrowUpRight, ClipboardList, Eye } from 'lucide-react';
+import { Search, Filter, RefreshCw, RefreshCcw, Check, ArrowUpRight, ClipboardList, Eye, Clock, Ban } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import useDataStore from '../../store/dataStore';
 import useUIStore from '../../store/ui';
 import { getStatusBadgeClass, formatStatus } from '../../utils/statusBadge';
@@ -9,6 +10,7 @@ import DetailUsulanModal from '../../components/ui/DetailUsulanModal';
 export default function PPTKDashboard() {
   const { isDarkMode } = useUIStore();
   const { usulanList, ppkomUsers, loading, fetchData } = useDataStore();
+  const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('terbaru');
@@ -47,9 +49,9 @@ export default function PPTKDashboard() {
     } catch (err) { alert("Gagal return: " + (err.response?.data?.message || err.message)); }
   };
 
-  const total = usulanList.length;
-  const pendingCount = usulanList.filter(u => u.status_kode === 'DIDISPOSISI_PPTK').length;
-  const processedCount = usulanList.filter(u => u.status_kode === 'DIDISPOSISI_PPKOM').length;
+  const waitCount = usulanList.filter(u => u.status_kode === 'DIDISPOSISI_PPTK').length;
+  const processCount = usulanList.filter(u => u.status_kode === 'DIDISPOSISI_PPKOM').length;
+  const returnCount = usulanList.filter(u => u.status_kode === 'DIKEMBALIKAN_KE_PPTK').length;
 
   let filteredList = usulanList;
   if (searchQuery.trim()) {
@@ -68,19 +70,34 @@ export default function PPTKDashboard() {
 
   return (
     <div className="animate-in fade-in duration-500">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className={`p-6 rounded-xl shadow-sm border flex flex-col hover:shadow-md transition-shadow ${isDarkMode ? 'bg-[#1e293b] border-slate-700/50' : 'bg-white border-gray-100'}`}>
-          <span className={`text-sm font-semibold mb-2 ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Total Daftar Usulan</span>
-          <span className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{total}</span>
-        </div>
-        <div className={`p-6 rounded-xl shadow-sm border flex flex-col hover:shadow-md transition-shadow ${isDarkMode ? 'bg-[#1e293b] border-slate-700/50' : 'bg-white border-gray-100'}`}>
-          <span className={`text-sm font-semibold mb-2 ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Menunggu Proses PPTK</span>
-          <span className={`text-3xl font-bold text-orange-600`}>{pendingCount}</span>
-        </div>
-        <div className={`p-6 rounded-xl shadow-sm border flex flex-col hover:shadow-md transition-shadow ${isDarkMode ? 'bg-[#1e293b] border-slate-700/50' : 'bg-white border-gray-100'}`}>
-          <span className={`text-sm font-semibold mb-2 ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Sudah Diteruskan</span>
-          <span className={`text-3xl font-bold text-green-600`}>{processedCount}</span>
-        </div>
+      <div className="flex gap-4 mb-6 flex-col md:flex-row w-full">
+          <div onClick={() => navigate('/dashboard/riwayat_usulan?status=DIDISPOSISI_PPTK')} className={`cursor-pointer rounded-2xl p-5 flex flex-col justify-between shadow-lg transition-all hover:-translate-y-1 border md:min-w-[240px] flex-1 ${isDarkMode ? 'bg-[#1e293b] border-slate-700/50' : 'bg-white border-gray-200'}`}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={`text-xs font-bold tracking-wide mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>MENUNGGU DISPOSISI PPKOM</p>
+                <h3 className="text-4xl font-bold text-blue-500">{waitCount}</h3>
+              </div>
+              <div className={`p-3 rounded-xl shadow-inner ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-100 text-blue-600'}`}><ClipboardList className="w-7 h-7" /></div>
+            </div>
+          </div>
+          <div onClick={() => navigate('/dashboard/riwayat_usulan?status=DIDISPOSISI_PPKOM')} className={`cursor-pointer rounded-2xl p-5 flex flex-col justify-between shadow-lg transition-all hover:-translate-y-1 border md:min-w-[240px] flex-1 ${isDarkMode ? 'bg-[#1e293b] border-slate-700/50' : 'bg-white border-gray-200'}`}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={`text-xs font-bold tracking-wide mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>SEDANG DIPROSES PPKOM</p>
+                <h3 className="text-4xl font-bold text-yellow-500">{processCount}</h3>
+              </div>
+              <div className={`p-3 rounded-xl shadow-inner ${isDarkMode ? 'bg-yellow-900/40 text-yellow-400' : 'bg-yellow-100 text-yellow-600'}`}><Clock className="w-7 h-7" /></div>
+            </div>
+          </div>
+          <div onClick={() => navigate('/dashboard/riwayat_usulan?status=DIKEMBALIKAN_KE_PPTK')} className={`cursor-pointer rounded-2xl p-5 flex flex-col justify-between shadow-lg transition-all hover:-translate-y-1 border md:min-w-[240px] flex-1 ${isDarkMode ? 'bg-[#1e293b] border-slate-700/50' : 'bg-white border-gray-200'}`}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={`text-xs font-bold tracking-wide mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>DIKEMBALIKAN KE PPTK</p>
+                <h3 className="text-4xl font-bold text-red-500">{returnCount}</h3>
+              </div>
+              <div className={`p-3 rounded-xl shadow-inner ${isDarkMode ? 'bg-red-900/40 text-red-500' : 'bg-red-100 text-red-600'}`}><Ban className="w-7 h-7" /></div>
+            </div>
+          </div>
       </div>
 
       <div className={`rounded-xl shadow-sm border overflow-hidden ${isDarkMode ? 'bg-[#1e293b] border-slate-700/50' : 'bg-white border-gray-100'}`}>
@@ -129,7 +146,7 @@ export default function PPTKDashboard() {
                               onChange={(e) => setTargetUserId(e.target.value)}
                             >
                               <option value="">-- Pilih PPKOM --</option>
-                              {ppkomUsers.map(u => <option key={u.id} value={u.id}>{u.username.toUpperCase()}</option>)}
+                              {ppkomUsers.map(u => <option key={u.id} value={u.id}>{u.nama}</option>)}
                             </select>
                             <input 
                               type="text" 

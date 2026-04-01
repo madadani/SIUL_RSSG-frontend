@@ -45,7 +45,7 @@ export default function PublicPage() {
   useEffect(() => {
     const fetchMasterBarang = async () => {
       try {
-        const res = await axios.get('http://localhost:8080/api/v1/master-barang');
+        const res = await axios.get(`http://${window.location.hostname}:8080/api/v1/master-barang`);
         if (res.data.success) {
           setMasterBarangList(res.data.data);
         }
@@ -65,7 +65,7 @@ export default function PublicPage() {
   const fetchUsulanList = async () => {
     setListLoading(true);
     try {
-      const res = await axios.get(`http://localhost:8080/api/v1/usulan?page=${page}&limit=${limit}&search=${searchQuery}`);
+      const res = await axios.get(`http://${window.location.hostname}:8080/api/v1/usulan?page=${page}&limit=${limit}&search=${searchQuery}`);
       if (res.data.success) {
         setUsulanList(res.data.data);
         setTotalData(res.data.meta.total);
@@ -88,7 +88,7 @@ export default function PublicPage() {
         }
       });
 
-      const res = await axios.post('http://localhost:8080/api/v1/usulan', payload, {
+      const res = await axios.post(`http://${window.location.hostname}:8080/api/v1/usulan`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -127,7 +127,7 @@ export default function PublicPage() {
     setSearchLoading(true);
     setSearchError('');
     try {
-      const res = await axios.get(`http://localhost:8080/api/v1/usulan/${nomor_tiket}`);
+      const res = await axios.get(`http://${window.location.hostname}:8080/api/v1/usulan/${nomor_tiket}`);
       if (res.data.success) {
         setUsulanDetail(res.data.data.usulan);
         setUsulanRiwayat(res.data.data.riwayat || []);
@@ -208,7 +208,11 @@ export default function PublicPage() {
             {/* Login Button */}
             <button
               onClick={() => navigate('/login')}
-              className={`text-sm font-bold px-4 py-2 rounded-lg transition-colors border ${darkMode ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 border-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-300'}`}
+              className={`text-sm font-black px-6 py-2 rounded-lg transition-all duration-300 shadow-md transform hover:scale-105 active:scale-95 ${
+                darkMode 
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:shaddow-blue-500/20' 
+                  : 'bg-gradient-to-r from-slate-900 to-slate-800 text-white hover:shadow-xl hover:shadow-slate-200'
+              }`}
             >
               Login
             </button>

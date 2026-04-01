@@ -21,16 +21,20 @@ export default function RiwayatUsulan() {
   const openDetail = (u) => { setDetailUsulan(u); setShowDetailModal(true); };
 
   useEffect(() => {
+    fetchData();
     const status = searchParams.get('status');
     if (status) {
       setStatusFilter(status);
     }
-  }, [searchParams]);
+  }, [searchParams, fetchData]);
 
   const statusLabel = {
-    'MENUNGGU_PEP': 'Menunggu Disposisi PPTK',
-    'DIDISPOSISI_PPTK': 'Sedang Diproses PPTK',
-    'DIKEMBALIKAN_KE_PEP': 'Dikembalikan ke PEP',
+    'MENUNGGU_PEP': 'Menunggu Disposisi',
+    'DIDISPOSISI_PPTK': 'Proses PPTK',
+    'DIDISPOSISI_PPKOM': 'Proses PPKOM',
+    'DIDISPOSISI_PP': 'Proses Pengadaan',
+    'REALISASI_SELESAI': 'Selesai',
+    'DIKEMBALIKAN_KE_PEP': 'Dikembalikan',
     'ALL': 'Semua Usulan'
   };
 

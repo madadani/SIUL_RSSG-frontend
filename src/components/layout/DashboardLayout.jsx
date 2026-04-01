@@ -68,7 +68,7 @@ export default function DashboardLayout() {
         <nav className="p-4 space-y-1 overflow-y-auto overflow-x-hidden flex-1">
           <NavItem to="/dashboard" icon={Home} label="Dashboard" />
           <NavItem to="/dashboard/riwayat_usulan" icon={History} label="Riwayat Usulan" />
-          <NavItem to="/dashboard/rincian_belanja" icon={List} label="Rincian Belanja" />
+          {user?.role === 'pep' && <NavItem to="/dashboard/rincian_belanja" icon={List} label="Rincian Belanja" />}
 
           {user?.role === 'pep' && (
             <div className="pt-2">

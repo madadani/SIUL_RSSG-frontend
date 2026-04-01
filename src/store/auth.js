@@ -10,7 +10,7 @@ const useAuthStore = create((set) => ({
   login: async (username, password) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post('http://localhost:8080/api/v1/auth/login', {
+      const response = await axios.post(`http://${window.location.hostname}:8080/api/v1/auth/login`, {
         username,
         password,
       });
