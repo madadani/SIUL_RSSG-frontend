@@ -7,15 +7,8 @@ import PublicPage from './pages/Public.jsx'
 import useAuthStore from './store/auth'
 import ToastContainer from './components/ui/Toast'
 import ConfirmDialog from './components/ui/ConfirmDialog'
+import ProtectedRoute from './components/auth/ProtectedRoute'
 import './index.css'
-
-const ProtectedRoute = ({ children }) => {
-  const token = useAuthStore((state) => state.token);
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

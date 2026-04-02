@@ -40,7 +40,7 @@ export default function DashboardLayout() {
     return `Portal ${roleLabel[user?.role] || ''}`;
   };
 
-  const NavItem = ({ to, icon: Icon, label, requiresHover = true }) => {
+  const NavItem = ({ to, icon: Icon, label }) => {
     const isActive = path === to || (to !== '/dashboard' && path.startsWith(to));
     return (
       <NavLink 

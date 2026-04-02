@@ -51,7 +51,6 @@ export default function LaporanPage() {
   const totalUsulan = filteredUsulan.length;
   const usulanSelesai = filteredUsulan.filter(u => u.status_kode === 'REALISASI_SELESAI').length;
   const usulanDitolak = filteredUsulan.filter(u => u.status_kode === 'DIKEMBALIKAN_KE_PEP').length;
-  const persenSelesai = totalUsulan > 0 ? Math.round((usulanSelesai / totalUsulan) * 100) : 0;
   const totalAnggaran = filteredAnggaranList.reduce((acc, curr) => acc + (curr.nominal || 0), 0);
 
   const categoryCounts = {};
