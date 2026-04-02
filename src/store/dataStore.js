@@ -49,14 +49,66 @@ const useDataStore = create((set, get) => ({
         ]);
         set({ usulanList: resU.data.data || [], ppUsers: resPP.data.data || [] });
       } else if (user.role === 'pp') {
-        const res = await api.get('/pp/usulan');
-        set({ usulanList: res.data.data || [] });
+        const [resU, resKat] = await Promise.all([
+          api.get('/pp/usulan'),
+          api.get('/kategori-belanja')
+        ]);
+        set({ 
+          usulanList: resU.data.data || [],
+          kategoriList: resKat.data.data || []
+        });
       }
     } catch (err) {
       console.error("Fetch data error:", err);
     } finally {
       set({ loading: false });
     }
+  },
+
+  // Kategori CRUD
+  addKategori: async (payload) => {
+    try {
+      await api.post('/pep/master/kategori-belanja', payload);
+      get().fetchData();
+      return true;
+    } catch (err) { return false; }
+  },
+  updateKategori: async (id, payload) => {
+    try {
+      await api.put(`/pep/master/kategori-belanja/${id}`, payload);
+      get().fetchData();
+      return true;
+    } catch (err) { return false; }
+  },
+  deleteKategori: async (id) => {
+    try {
+      await api.delete(`/pep/master/kategori-belanja/${id}`);
+      get().fetchData();
+      return true;
+    } catch (err) { return false; }
+  },
+
+  // Master Barang CRUD
+  addBarang: async (payload) => {
+    try {
+      await api.post('/pep/master/nama-barang', payload);
+      get().fetchData();
+      return true;
+    } catch (err) { return false; }
+  },
+  updateBarang: async (id, payload) => {
+    try {
+      await api.put(`/pep/master/nama-barang/${id}`, payload);
+      get().fetchData();
+      return true;
+    } catch (err) { return false; }
+  },
+  deleteBarang: async (id) => {
+    try {
+      await api.delete(`/pep/master/nama-barang/${id}`);
+      get().fetchData();
+      return true;
+    } catch (err) { return false; }
   }
 }));
 

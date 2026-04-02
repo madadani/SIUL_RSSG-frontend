@@ -5,6 +5,8 @@ import App from './App.jsx'
 import Login from './pages/Login.jsx'
 import PublicPage from './pages/Public.jsx'
 import useAuthStore from './store/auth'
+import ToastContainer from './components/ui/Toast'
+import ConfirmDialog from './components/ui/ConfirmDialog'
 import './index.css'
 
 const ProtectedRoute = ({ children }) => {
@@ -27,6 +29,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           </ProtectedRoute>
         } />
       </Routes>
+      <ToastContainer />
+      <ConfirmDialog />
     </BrowserRouter>
   </React.StrictMode>,
 )

@@ -3,6 +3,8 @@ import { Search, Filter, RefreshCw, List, Plus, Edit, Trash2, X } from 'lucide-r
 import useDataStore from '../../store/dataStore';
 import useUIStore from '../../store/ui';
 import api from '../../api/client';
+import { toast } from '../../components/ui/Toast';
+import { confirmDialog } from '../../components/ui/ConfirmDialog';
 
 export default function RincianBelanja() {
   const { isDarkMode } = useUIStore();
@@ -45,7 +47,7 @@ export default function RincianBelanja() {
 
   const handleSaveAnggaran = async () => {
     if (!editAnggaranForm.nama || !editAnggaranForm.category_id || !editAnggaranForm.nominal || !editAnggaranForm.pptk_id) {
-      alert("Harap lengkapi semua field wajib (*)");
+      toast.warning("Harap lengkapi semua field wajib (*)");
       return;
     }
     try {
@@ -58,23 +60,29 @@ export default function RincianBelanja() {
         category_id: parseInt(editAnggaranForm.category_id)
       });
       if (res.data.success) {
-        alert("Data anggaran berhasil diperbarui!");
+        toast.success("Data anggaran berhasil diperbarui!");
         setShowEditAnggaranModal(false);
         fetchData();
       }
     } catch (err) {
-      alert("Gagal update: " + (err.response?.data?.message || err.message));
+      toast.error("Gagal update: " + (err.response?.data?.message || err.message));
     }
   };
 
   const handleDeleteAnggaran = async (id) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus data anggaran ini?")) return;
+    const confirmed = await confirmDialog({
+      title: 'Hapus Data Anggaran?',
+      message: 'Data anggaran ini akan dihapus secara permanen. Tindakan ini tidak bisa dibatalkan.',
+      type: 'danger',
+      confirmText: 'Ya, Hapus',
+    });
+    if (!confirmed) return;
     try {
       await api.delete(`/pep/usulan/${id}/detail_anggaran`);
-      alert("Data berhasil dihapus!");
+      toast.success("Data berhasil dihapus!");
       fetchData();
     } catch (err) {
-      alert("Gagal menghapus: " + (err.response?.data?.message || err.message));
+      toast.error("Gagal menghapus: " + (err.response?.data?.message || err.message));
     }
   };
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import api from '../api/client';
 import useDataStore from '../store/dataStore';
+import { toast } from '../components/ui/Toast';
 
 /**
  * Custom Hook to handle usulan actions (disposisi, return, setuju, tolak, realisasi)
@@ -14,12 +15,12 @@ export function useUsulanActions() {
     try {
       const res = await api.post(url, payload);
       if (res.data.success) {
-        alert(successMsg || "Aksi berhasil dilakukan!");
+        toast.success(successMsg || "Aksi berhasil dilakukan!");
         await fetchData();
         return true;
       }
     } catch (err) {
-      alert("Gagal melakukan aksi: " + (err.response?.data?.message || err.message));
+      toast.error("Gagal melakukan aksi: " + (err.response?.data?.message || err.message));
     } finally {
       setLoadingAction(false);
     }

@@ -3,12 +3,18 @@ import { Search, Filter, RefreshCw, FileText, Eye, ClipboardList } from 'lucide-
 import { useSearchParams } from 'react-router-dom';
 import useDataStore from '../../store/dataStore';
 import useUIStore from '../../store/ui';
-import { getStatusBadgeClass, formatStatus } from '../../utils/statusBadge';
+import api from '../../api/client';
+import useAuthStore from '../../store/auth';
+import { useUsulanActions } from '../../hooks/useUsulan';
+import { toast } from '../../components/ui/Toast';
 import DetailUsulanModal from '../../components/ui/DetailUsulanModal';
+import DisposisiModal from '../../components/ui/DisposisiModal';
 
 export default function RiwayatUsulan() {
   const { isDarkMode } = useUIStore();
-  const { usulanList, loading, fetchData } = useDataStore();
+  const { user } = useAuthStore();
+  const { usulanList, pptkUsers, ppkomUsers, ppUsers, loading, fetchData } = useDataStore();
+  const { handleDisposisiPEP } = useUsulanActions();
   
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,7 +24,89 @@ export default function RiwayatUsulan() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailUsulan, setDetailUsulan] = useState(null);
 
+  const [showDisposisiModal, setShowDisposisiModal] = useState(false);
+  const [disposisiUsulan, setDisposisiUsulan] = useState(null);
+  const [targetUserId, setTargetUserId] = useState('');
+  const [catatan, setCatatan] = useState('');
+
   const openDetail = (u) => { setDetailUsulan(u); setShowDetailModal(true); };
+
+  const openDisposisi = (u) => {
+    setDisposisiUsulan(u);
+    setTargetUserId('');
+    let defaultCatatan = '';
+    if (user?.role === 'pptk') defaultCatatan = 'ACC PPTK, Lanjut proses lelang.';
+    if (user?.role === 'ppkom') defaultCatatan = 'Disetujui PPKOM. Lanjut proses pengadaan.';
+    setCatatan(defaultCatatan);
+    setShowDisposisiModal(true);
+  };
+
+  const getDisposisiConfig = () => {
+    if (!user || !disposisiUsulan) return null;
+    if (user.role === 'pep' && disposisiUsulan.status_kode === 'MENUNGGU_PEP') {
+      return {
+        targetLabel: "Pilih Pejabat PPTK Penerima Disposisi",
+        users: pptkUsers || [],
+        selectedUser: targetUserId,
+        setSelectedUser: setTargetUserId,
+        onSubmit: async () => {
+          if (!targetUserId) { toast.warning("Pilih PPTK terlebih dahulu!"); return; }
+          const ok = await handleDisposisiPEP(disposisiUsulan.id, targetUserId, catatan);
+          if (ok) {
+            setShowDisposisiModal(false);
+            fetchData();
+          }
+        }
+      };
+    }
+    if (user.role === 'pptk' && disposisiUsulan.status_kode === 'DIDISPOSISI_PPTK') {
+      return {
+        targetLabel: "Pilih Pejabat PPKOM Penerima Disposisi",
+        users: ppkomUsers || [],
+        selectedUser: targetUserId,
+        setSelectedUser: setTargetUserId,
+        onSubmit: async () => {
+          if (!targetUserId) { toast.warning("Pilih PPKOM terlebih dahulu!"); return; }
+          try {
+            const res = await api.post(`/pptk/usulan/${disposisiUsulan.id}/disposisi`, { 
+              ppkom_user_id: parseInt(targetUserId), 
+              catatan: catatan || "ACC PPTK" 
+            });
+            if (res.data.success) {
+              toast.success('Usulan berhasil didisposisikan ke PPKOM!');
+              setShowDisposisiModal(false);
+              fetchData();
+            }
+          } catch (err) { toast.error("Gagal proses: " + (err.response?.data?.message || err.message)); }
+        }
+      };
+    }
+    if (user.role === 'ppkom' && disposisiUsulan.status_kode === 'DIDISPOSISI_PPKOM') {
+      return {
+        targetLabel: "Pilih Pejabat Pengadaan (PP) Penerima",
+        users: ppUsers || [],
+        selectedUser: targetUserId,
+        setSelectedUser: setTargetUserId,
+        onSubmit: async () => {
+          if (!targetUserId) { toast.warning("Pilih PP terlebih dahulu!"); return; }
+          try {
+            const res = await api.post(`/ppkom/usulan/${disposisiUsulan.id}/setujui`, { 
+              pp_user_id: parseInt(targetUserId), 
+              catatan: catatan || "Disetujui PPKOM" 
+            });
+            if (res.data.success) {
+              toast.success('Usulan berhasil disetujui dan diteruskan ke PP!');
+              setShowDisposisiModal(false);
+              fetchData();
+            }
+          } catch (err) { toast.error("Gagal: " + (err.response?.data?.message || err.message)); }
+        }
+      };
+    }
+    return null;
+  };
+
+  const currentDisposisiConfig = getDisposisiConfig();
 
   useEffect(() => {
     fetchData();
@@ -33,8 +121,9 @@ export default function RiwayatUsulan() {
     'DIDISPOSISI_PPTK': 'Proses PPTK',
     'DIDISPOSISI_PPKOM': 'Proses PPKOM',
     'DIDISPOSISI_PP': 'Proses Pengadaan',
-    'REALISASI_SELESAI': 'Selesai',
-    'DIKEMBALIKAN_KE_PEP': 'Dikembalikan',
+    'REALISASI_SELESAI': 'Selesai Realisasi',
+    'DIKEMBALIKAN_KE_PEP': 'Return ke PEP',
+    'DIKEMBALIKAN_KE_PPTK': 'Return ke PPTK',
     'ALL': 'Semua Usulan'
   };
 
@@ -55,18 +144,31 @@ export default function RiwayatUsulan() {
     return (b.id || 0) - (a.id || 0);
   });
 
+  const FilterBtn = ({ code, label, colorClass }) => (
+    <button 
+      onClick={() => setStatusFilter(code)} 
+      className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all active:scale-95 border ${statusFilter === code ? `${colorClass} text-white border-transparent shadow-lg` : (isDarkMode ? 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50')}`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div className="animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <div>
-          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-gray-800'}`}>Riwayat Usulan</h2>
-          <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Filter: <span className="font-bold">{statusLabel[statusFilter] || statusFilter}</span> — {filteredList.length} data</p>
+          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-gray-800'}`}>Riwayat & Arsip Usulan</h2>
+          <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Tampilan seluruh riwayat data usulan — {filteredList.length} data</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => setStatusFilter('ALL')} className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors ${statusFilter === 'ALL' ? 'bg-blue-600 text-white' : (isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')}`}>Semua</button>
-          <button onClick={() => setStatusFilter('MENUNGGU_PEP')} className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors ${statusFilter === 'MENUNGGU_PEP' ? 'bg-blue-600 text-white' : (isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')}`}>Menunggu</button>
-          <button onClick={() => setStatusFilter('DIDISPOSISI_PPTK')} className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors ${statusFilter === 'DIDISPOSISI_PPTK' ? 'bg-yellow-600 text-white' : (isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')}`}>Diproses</button>
-          <button onClick={() => setStatusFilter('DIKEMBALIKAN_KE_PEP')} className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors ${statusFilter === 'DIKEMBALIKAN_KE_PEP' ? 'bg-red-600 text-white' : (isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')}`}>Dikembalikan</button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <FilterBtn code="ALL" label="Semua" colorClass="bg-slate-600" />
+          <FilterBtn code="MENUNGGU_PEP" label="Masuk" colorClass="bg-blue-600" />
+          <FilterBtn code="DIDISPOSISI_PPTK" label="PPTK" colorClass="bg-indigo-600" />
+          <FilterBtn code="DIDISPOSISI_PPKOM" label="PPKOM" colorClass="bg-purple-600" />
+          <FilterBtn code="DIDISPOSISI_PP" label="Lelang" colorClass="bg-orange-600" />
+          <FilterBtn code="REALISASI_SELESAI" label="Selesai" colorClass="bg-green-600" />
+          <FilterBtn code="DIKEMBALIKAN_KE_PEP" label="Return PEP" colorClass="bg-red-600" />
+          <FilterBtn code="DIKEMBALIKAN_KE_PPTK" label="Return PPTK" colorClass="bg-rose-600" />
         </div>
       </div>
 
@@ -107,25 +209,25 @@ export default function RiwayatUsulan() {
         <div className="p-0 overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className={`text-xs uppercase tracking-wider ${isDarkMode ? 'bg-[#0f172a]/50 text-slate-400 border-b border-slate-700/50' : 'bg-gray-50/50 text-gray-500'}`}>
-                <th className="px-6 py-4 font-bold">No</th>
-                <th className="px-6 py-4 font-bold">Kode Tiket</th>
-                <th className="px-6 py-4 font-bold">Nama Barang/Jasa</th>
-                <th className="px-6 py-4 font-bold">Tingkat Kepentingan</th>
-                <th className="px-6 py-4 font-bold text-center">Info</th>
-                <th className="px-6 py-4 font-bold text-center">Status</th>
+              <tr className={`text-xs uppercase tracking-wider whitespace-nowrap ${isDarkMode ? 'bg-[#0f172a]/50 text-slate-400 border-b border-slate-700/50' : 'bg-gray-50/50 text-gray-500'}`}>
+                <th className="px-4 py-4 font-bold text-center w-16">NO</th>
+                <th className="px-4 py-4 font-bold min-w-[300px]">BARANG / JASA</th>
+                <th className="px-4 py-4 font-bold min-w-[180px]">PEMOHON</th>
+                <th className="px-4 py-4 font-bold text-center min-w-[180px]">PRIORITAS</th>
+                <th className="px-4 py-4 font-bold text-center min-w-[150px]">TANGGAL</th>
+                <th className="px-4 py-4 font-bold text-center min-w-[200px]">AKSI</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${isDarkMode ? 'divide-slate-700/50' : 'divide-gray-100'}`}>
               {loading ? (
-                <tr><td colSpan="5" className="text-center py-12">
+                <tr><td colSpan="6" className="text-center py-12">
                   <div className="flex flex-col items-center">
                     <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                     <span className={`font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-400'}`}>Memuat data...</span>
                   </div>
                 </td></tr>
               ) : filteredList.length === 0 ? (
-                <tr><td colSpan="5" className="text-center py-12">
+                <tr><td colSpan="6" className="text-center py-12">
                   <div className="flex flex-col items-center">
                     <FileText className={`w-12 h-12 mb-4 ${isDarkMode ? 'text-slate-600' : 'text-gray-200'}`} />
                     <span className={`font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-400'}`}>{searchQuery ? 'Tidak ditemukan usulan yang cocok' : 'Belum ada usulan untuk filter ini'}</span>
@@ -133,41 +235,54 @@ export default function RiwayatUsulan() {
                 </td></tr>
               ) : filteredList.map((item, idx) => (
                 <tr key={item.id} className={`transition-colors ${isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-gray-50'}`}>
-                  <td className={`px-6 py-4 font-medium ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>{idx + 1}</td>
-                  <td className="px-6 py-4">
-                    <span className={`font-bold px-2 py-1 rounded text-sm ${isDarkMode ? 'text-slate-200 bg-slate-700' : 'text-gray-900 bg-gray-100'}`}>{item.kode_tiket}</span>
-                  </td>
-                  <td className="px-6 py-4">
+                  <td className={`px-4 py-4 font-black text-center ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>{idx + 1}</td>
+                  <td className="px-4 py-4">
                     <div className="flex flex-col">
-                      <span className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-gray-800'}`}>{item.nama_usulan}</span>
-                      <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-gray-100 text-gray-400'}`}>Kategori: {item.kategori?.nama_kategori || `ID ${item.kategori_belanja_id}`}</span>
+                      <span className={`font-bold text-[13px] ${isDarkMode ? 'text-slate-200' : 'text-gray-800'}`}>{item.nama_usulan}</span>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                         <span className={`text-[10px] font-semibold whitespace-nowrap ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Kategori: {item.kategori?.nama_kategori || '-'}</span>
+                         {item.kode_tiket && <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded border whitespace-nowrap ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-gray-100 border-gray-200 text-gray-500'}`}>{item.kode_tiket}</span>}
                       </div>
-                      {item.catatan_pep && (
-                        <div className={`mt-2 p-2 rounded-lg border-l-4 text-[10px] italic flex items-center gap-2 ${isDarkMode ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-300' : 'bg-indigo-50 border-indigo-200 text-indigo-700'}`}>
-                           <ClipboardList className="w-3 h-3 min-w-[12px]" />
-                           <span className="truncate max-w-[200px]">PEP: "{item.catatan_pep}"</span>
-                        </div>
-                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm whitespace-nowrap border ${
-                      item.tingkat_kepentingan === 'Sangat Penting' ? (isDarkMode ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-red-50 border-red-200 text-red-700') :
-                      item.tingkat_kepentingan === 'Penting' ? (isDarkMode ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' : 'bg-orange-50 border-orange-200 text-orange-700') :
-                      (isDarkMode ? 'bg-slate-700 border-slate-600 text-slate-300' : 'bg-gray-100 border-gray-200 text-gray-700')
-                    }`}>
-                      {item.tingkat_kepentingan}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className={`font-bold text-[13px] whitespace-nowrap ${isDarkMode ? 'text-slate-200' : 'text-gray-800'}`}>{item.nama_pengusul || '-'}</span>
+                      <span className={`text-[10px] opacity-70 mt-0.5 whitespace-nowrap ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>{item.unit_ruangan || '-'}</span>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <button onClick={() => openDetail(item)} className={`p-2 rounded-xl transition-all border flex items-center justify-center mx-auto text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-slate-800/50 border-slate-700 text-blue-400 hover:bg-slate-700' : 'bg-blue-50/50 border-blue-100 text-blue-600 hover:bg-blue-100'}`}><Eye className="w-3.5 h-3.5 mr-1.5"/> Log</button>
+                  <td className="px-4 py-4 text-center">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight whitespace-nowrap ${item.tingkat_kegentingan === 'Sangat Genting' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'}`}>{item.tingkat_kegentingan || 'Genting'}</span>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap border shadow-sm ${getStatusBadgeClass(item.status_kode)}`}>
-                      {formatStatus(item.status_kode)}
-                    </span>
+                  <td className="px-4 py-4 text-center whitespace-nowrap">
+                      <span className={`font-bold text-[11px] ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+                         {new Date(item.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric'})}
+                      </span>
                   </td>
+                   <td className="px-4 py-4">
+                     <div className="flex justify-center items-center gap-2 whitespace-nowrap">
+                       {/* Tombol Disposisi dinamis berdasarkan role & status */}
+                       {user?.role === 'pep' && item.status_kode === 'MENUNGGU_PEP' && (
+                          <button onClick={() => openDisposisi(item)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm tracking-wide transition-all shadow-md shadow-blue-500/20 active:scale-95">
+                            Disposisi
+                          </button>
+                       )}
+                       {user?.role === 'pptk' && item.status_kode === 'DIDISPOSISI_PPTK' && (
+                          <button onClick={() => openDisposisi(item)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm tracking-wide transition-all shadow-md shadow-blue-500/20 active:scale-95">
+                            Disposisi
+                          </button>
+                       )}
+                       {user?.role === 'ppkom' && item.status_kode === 'DIDISPOSISI_PPKOM' && (
+                          <button onClick={() => openDisposisi(item)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm tracking-wide transition-all shadow-md shadow-blue-500/20 active:scale-95">
+                            Disposisi
+                          </button>
+                       )}
+
+                       <button onClick={() => openDetail(item)} className={`px-4 py-2 rounded-xl border font-bold text-sm tracking-wide transition-all ${isDarkMode ? 'bg-white text-slate-900 border-transparent hover:bg-gray-200' : 'bg-white text-gray-800 border-gray-200 hover:bg-gray-50'}`}>
+                         Detail
+                       </button>
+                     </div>
+                   </td>
                 </tr>
               ))}
             </tbody>
@@ -175,6 +290,20 @@ export default function RiwayatUsulan() {
         </div>
       </div>
       <DetailUsulanModal isOpen={showDetailModal} onClose={() => setShowDetailModal(false)} usulan={detailUsulan} />
+      {currentDisposisiConfig && (
+        <DisposisiModal
+          isOpen={showDisposisiModal}
+          onClose={() => setShowDisposisiModal(false)}
+          usulan={disposisiUsulan}
+          users={currentDisposisiConfig.users}
+          targetLabel={currentDisposisiConfig.targetLabel}
+          selectedUser={currentDisposisiConfig.selectedUser}
+          setSelectedUser={currentDisposisiConfig.setSelectedUser}
+          catatan={catatan}
+          setCatatan={setCatatan}
+          onSubmit={currentDisposisiConfig.onSubmit}
+        />
+      )}
     </div>
   );
 }
