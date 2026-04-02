@@ -24,7 +24,6 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npx vite build
+        run: npm run build
         env:
-          ESLINT_NO_DEV_ERRORS: true
-          DISABLE_ESLINT_PLUGIN: true
+          CI: ""
