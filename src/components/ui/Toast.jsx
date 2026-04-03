@@ -2,21 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import useUIStore from '../../store/ui';
 
-// ─── Global Toast State ────────────────────────────────────────
-let toastListeners = [];
-let toastId = 0;
+import { addToastListener, removeToastListener } from '../../utils/toast';
 
-export function toast(message, type = 'success', duration = 3500) {
-  const id = ++toastId;
-  const t = { id, message, type, duration };
-  toastListeners.forEach(fn => fn(prev => [...prev, t]));
-  return id;
-}
-
-toast.success = (msg, dur) => toast(msg, 'success', dur);
-toast.error   = (msg, dur) => toast(msg, 'error', dur);
-toast.warning = (msg, dur) => toast(msg, 'warning', dur);
-toast.info    = (msg, dur) => toast(msg, 'info', dur);
 
 // ─── Icon + Color Map ──────────────────────────────────────────
 const config = {
@@ -97,9 +84,10 @@ export default function ToastContainer() {
   const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
-    toastListeners.push(setToasts);
-    return () => { toastListeners = toastListeners.filter(fn => fn !== setToasts); };
+    addToastListener(setToasts);
+    return () => removeToastListener(setToasts);
   }, []);
+
 
   const remove = useCallback((id) => {
     setToasts(prev => prev.filter(t => t.id !== id));

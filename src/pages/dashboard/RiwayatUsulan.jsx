@@ -6,7 +6,7 @@ import useUIStore from '../../store/ui';
 import api from '../../api/client';
 import useAuthStore from '../../store/auth';
 import { useUsulanActions } from '../../hooks/useUsulan';
-import { toast } from '../../components/ui/Toast';
+import { toast } from '../../utils/toast';
 import DetailUsulanModal from '../../components/ui/DetailUsulanModal';
 import DisposisiModal from '../../components/ui/DisposisiModal';
 

@@ -7,7 +7,7 @@ import useUIStore from '../../store/ui';
 import DetailUsulanModal from '../../components/ui/DetailUsulanModal';
 import DisposisiModal from '../../components/ui/DisposisiModal';
 import { useUsulanActions } from '../../hooks/useUsulan';
-import { toast } from '../../components/ui/Toast';
+import { toast } from '../../utils/toast';
 
 export default function PEPDashboard() {
   const { isDarkMode } = useUIStore();

@@ -17,8 +17,6 @@ export default function PublicPage() {
     tingkat_kepentingan: '',
     foto_barang: null
   });
-  const [success, setSuccess] = useState(false);
-  const [ticketKode, setTicketKode] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('formulir'); // 'formulir' | 'riwayat'
   
@@ -31,11 +29,9 @@ export default function PublicPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // States for Detail View (reused)
-  const [searchKode, setSearchKode] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [usulanDetail, setUsulanDetail] = useState(null);
   const [usulanRiwayat, setUsulanRiwayat] = useState([]);
-  const [searchError, setSearchError] = useState('');
   const [darkMode, setDarkMode] = useState(false);
 
   // Autocomplete Master Data
@@ -125,7 +121,6 @@ export default function PublicPage() {
 
   const handleViewDetail = async (nomor_tiket) => {
     setSearchLoading(true);
-    setSearchError('');
     try {
       const res = await axios.get(`http://${window.location.hostname}:8080/api/v1/usulan/${nomor_tiket}`);
       if (res.data.success) {
@@ -133,7 +128,7 @@ export default function PublicPage() {
         setUsulanRiwayat(res.data.data.riwayat || []);
       }
     } catch (err) {
-      setSearchError(err.response?.data?.message || 'Usulan tidak ditemukan.');
+      console.error(err);
     } finally {
       setSearchLoading(false);
     }
@@ -242,28 +237,7 @@ export default function PublicPage() {
               Formulir Usulan
             </h3>
 
-            {success ? (
-              <div className={`rounded-xl p-8 text-center border ${darkMode ? 'bg-green-900/20 border-green-900' : 'bg-green-50 border-green-200'}`}>
-                <div className="w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                  <img src="/logo.png" className="h-full w-auto object-contain" alt="Success" />
-                </div>
-                <h4 className={`text-xl font-bold mb-2 ${darkMode ? 'text-green-400' : 'text-green-800'}`}>Usulan Berhasil Dikirim!</h4>
-                <p className={`font-semibold mb-6 ${darkMode ? 'text-green-500' : 'text-green-700'}`}>Nomor tiket Anda:</p>
-                <div className={`border-2 rounded-lg py-3 px-6 text-3xl font-extrabold inline-block tracking-widest mb-6 ${darkMode ? 'bg-slate-900 border-green-500 text-white' : 'bg-white border-green-300 text-slate-800'}`}>
-                  {ticketKode}
-                </div>
-                <p className={`text-sm font-semibold mb-6 flex justify-center items-center ${darkMode ? 'text-green-500' : 'text-green-600'}`}>
-                  <Info className="w-4 h-4 mr-1" /> Harap simpan nomor tiket ini untuk melacak status usulan.
-                </p>
-                <button
-                  onClick={() => setSuccess(false)}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-                >
-                  Ajukan Usulan Lain
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6 text-left w-full">
+            <form onSubmit={handleSubmit} className="space-y-6 text-left w-full">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>Nama Lengkap <span className="text-red-500">*</span></label>
@@ -452,7 +426,6 @@ export default function PublicPage() {
                   </button>
                 </div>
               </form>
-            )}
           </div>
           )}
 

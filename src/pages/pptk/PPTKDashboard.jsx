@@ -6,8 +6,8 @@ import useUIStore from '../../store/ui';
 import api from '../../api/client';
 import DetailUsulanModal from '../../components/ui/DetailUsulanModal';
 import DisposisiModal from '../../components/ui/DisposisiModal';
-import { toast } from '../../components/ui/Toast';
-import { confirmDialog } from '../../components/ui/ConfirmDialog';
+import { toast } from '../../utils/toast';
+import { confirmDialog } from '../../utils/confirm';
 
 export default function PPTKDashboard() {
   const { isDarkMode } = useUIStore();

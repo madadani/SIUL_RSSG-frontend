@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import api from '../api/client';
 import useDataStore from '../store/dataStore';
-import { toast } from '../components/ui/Toast';
+import { toast } from '../utils/toast';
 
 /**
  * Custom Hook to handle usulan actions (disposisi, return, setuju, tolak, realisasi)

@@ -2,43 +2,7 @@ import { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, XCircle, Info, X, HelpCircle } from 'lucide-react';
 import useUIStore from '../../store/ui';
 
-// ─── Global Confirm State ──────────────────────────────────────
-let confirmResolver = null;
-let setConfirmStateFn = null;
-
-/**
- * Show a SweetAlert-style confirmation dialog.
- * Returns a Promise that resolves to true (confirmed) or false (cancelled).
- * 
- * @param {Object} options
- * @param {string} options.title - Dialog title
- * @param {string} options.message - Dialog message/description
- * @param {'warning'|'danger'|'success'|'info'|'question'} options.type - Icon type
- * @param {string} options.confirmText - Confirm button text (default: "Ya, Lanjutkan")
- * @param {string} options.cancelText - Cancel button text (default: "Batal")
- * @param {boolean} options.showInput - Show text input (default: false)
- * @param {string} options.inputPlaceholder - Placeholder for input
- * @param {boolean} options.inputRequired - Require input before confirming (default: false)
- */
-export function confirmDialog(options = {}) {
-  return new Promise((resolve) => {
-    confirmResolver = resolve;
-    if (setConfirmStateFn) {
-      setConfirmStateFn({
-        isOpen: true,
-        title: options.title || 'Konfirmasi',
-        message: options.message || 'Apakah Anda yakin?',
-        type: options.type || 'warning',
-        confirmText: options.confirmText || 'Ya, Lanjutkan',
-        cancelText: options.cancelText || 'Batal',
-        showInput: options.showInput || false,
-        inputPlaceholder: options.inputPlaceholder || '',
-        inputRequired: options.inputRequired || false,
-        inputValue: '',
-      });
-    }
-  });
-}
+import { getConfirmResolver, setConfirmResolver, setSetConfirmStateFn } from '../../utils/confirm';
 
 // ─── Icon + Color Config ───────────────────────────────────────
 const typeConfig = {
@@ -101,24 +65,26 @@ export default function ConfirmDialog() {
   });
 
   useEffect(() => {
-    setConfirmStateFn = setState;
-    return () => { setConfirmStateFn = null; };
+    setSetConfirmStateFn(setState);
+    return () => { setSetConfirmStateFn(null); };
   }, []);
 
   const handleConfirm = () => {
     if (state.inputRequired && !state.inputValue.trim()) return;
     setState(s => ({ ...s, isOpen: false }));
-    if (confirmResolver) {
-      confirmResolver(state.showInput ? state.inputValue : true);
-      confirmResolver = null;
+    const resolver = getConfirmResolver();
+    if (resolver) {
+      resolver(state.showInput ? state.inputValue : true);
+      setConfirmResolver(null);
     }
   };
 
   const handleCancel = () => {
     setState(s => ({ ...s, isOpen: false }));
-    if (confirmResolver) {
-      confirmResolver(false);
-      confirmResolver = null;
+    const resolver = getConfirmResolver();
+    if (resolver) {
+      resolver(false);
+      setConfirmResolver(null);
     }
   };
 

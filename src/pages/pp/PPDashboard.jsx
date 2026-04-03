@@ -5,7 +5,7 @@ import useDataStore from '../../store/dataStore';
 import useUIStore from '../../store/ui';
 import api from '../../api/client';
 import DetailUsulanModal from '../../components/ui/DetailUsulanModal';
-import { toast } from '../../components/ui/Toast';
+import { toast } from '../../utils/toast';
 
 export default function PPDashboard() {
   const { isDarkMode } = useUIStore();
