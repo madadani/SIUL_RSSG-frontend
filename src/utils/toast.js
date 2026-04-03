@@ -13,4 +13,11 @@ toast.error   = (msg, dur) => toast(msg, 'error', dur);
 toast.warning = (msg, dur) => toast(msg, 'warning', dur);
 toast.info    = (msg, dur) => toast(msg, 'info', dur);
 
-export { toastListeners };
+export function addToastListener(fn) {
+  toastListeners.push(fn);
+}
+
+export function removeToastListener(fn) {
+  toastListeners = toastListeners.filter(l => l !== fn);
+}
+

@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import useUIStore from '../../store/ui';
 
-import { toastListeners } from '../../utils/toast';
+import { addToastListener, removeToastListener } from '../../utils/toast';
+
 
 // ─── Icon + Color Map ──────────────────────────────────────────
 const config = {
@@ -83,9 +84,10 @@ export default function ToastContainer() {
   const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
-    toastListeners.push(setToasts);
-    return () => { toastListeners = toastListeners.filter(fn => fn !== setToasts); };
+    addToastListener(setToasts);
+    return () => removeToastListener(setToasts);
   }, []);
+
 
   const remove = useCallback((id) => {
     setToasts(prev => prev.filter(t => t.id !== id));
